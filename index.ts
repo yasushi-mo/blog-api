@@ -1,7 +1,15 @@
 import express, { Application, Request, Response } from "express";
+import mysql from "mysql2";
 
 const app: Application = express();
 const port = 3001;
+
+const connection = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "password",
+  database: "blog_app",
+});
 
 app.use(express.json());
 
@@ -33,15 +41,30 @@ app.get("/blogs", (req: Request, res: Response) => {
 
 // Create a new blog
 app.post("/blogs", (req: Request, res: Response) => {
-  const newBlog: Blog = {
-    id: Date.now().toString(),
-    title: req.body.title,
-    body: req.body.body,
-  };
+  connection.connect((error) => {
+    if (error) {
+      console.error("error connecting to MySQL: ", error);
+      return;
+    }
 
-  blogs.push(newBlog);
+    console.log("success connecting to MySQL");
+  });
 
-  res.status(201).json(newBlog);
+  console.log("req.body:", req.body);
+
+  const query = "INSERT INTO blogs (title, body) VALUES (?, ?)";
+  connection.query(
+    query,
+    [`${req.body.title}`, `${req.body.body}`],
+    (error, results) => {
+      if (error) {
+        console.error("error insert values:", error);
+        res.status(500).json(error);
+        return;
+      }
+      res.status(201).json({ message: "Blog created successfully" });
+    }
+  );
 });
 
 // Update a blog
