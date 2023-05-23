@@ -34,13 +34,7 @@ const sampleBlogs: Blog[] = [
 
 let blogs: Blog[] = sampleBlogs;
 
-// Get all blogs
-app.get("/blogs", (req: Request, res: Response) => {
-  res.json(blogs);
-});
-
-// Create a new blog
-app.post("/blogs", (req: Request, res: Response) => {
+const connectToDatabase = () => {
   connection.connect((error) => {
     if (error) {
       console.error("error connecting to MySQL: ", error);
@@ -49,8 +43,16 @@ app.post("/blogs", (req: Request, res: Response) => {
 
     console.log("success connecting to MySQL");
   });
+};
 
-  console.log("req.body:", req.body);
+// Get all blogs
+app.get("/blogs", (req: Request, res: Response) => {
+  res.json(blogs);
+});
+
+// Create a new blog
+app.post("/blogs", (req: Request, res: Response) => {
+  connectToDatabase();
 
   const query = "INSERT INTO blogs (title, body) VALUES (?, ?)";
   connection.query(
