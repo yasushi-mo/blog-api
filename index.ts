@@ -47,7 +47,15 @@ const connectToDatabase = () => {
 
 // Get all blogs
 app.get("/blogs", (req: Request, res: Response) => {
-  res.json(blogs);
+  const query = "SELECT * FROM blogs";
+  connection.query(query, (error, results) => {
+    if (error) {
+      console.error("error select blogs:", error);
+      res.status(500).json(error);
+      return;
+    }
+    res.status(200).json(results);
+  });
 });
 
 // Create a new blog
@@ -60,7 +68,7 @@ app.post("/blogs", (req: Request, res: Response) => {
     [`${req.body.title}`, `${req.body.body}`],
     (error, results) => {
       if (error) {
-        console.error("error insert values:", error);
+        console.error("error insert blogs:", error);
         res.status(500).json(error);
         return;
       }
