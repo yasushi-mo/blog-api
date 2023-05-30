@@ -11,46 +11,29 @@ const connection = mysql.createConnection({
   database: "blog_app",
 });
 
-app.use(express.json());
-
-interface Blog {
-  id: string;
-  title: string;
-  body: string;
-}
-
-const sampleBlogs: Blog[] = [
-  {
-    id: "sample1",
-    title: "Sample Blog Title 1",
-    body: "This is a sample blog body 1.",
-  },
-  {
-    id: "sample2",
-    title: "Sample Blog Title 2",
-    body: "This is a sample blog body 2.",
-  },
-];
-
-let blogs: Blog[] = sampleBlogs;
-
 const connectToDatabase = () => {
   connection.connect((error) => {
     if (error) {
-      console.error("error connecting to MySQL: ", error);
+      console.error("Error connecting to MySQL: ", error);
       return;
     }
 
-    console.log("success connecting to MySQL");
+    console.log("Success connecting to MySQL");
   });
 };
+
+app.use(express.json());
+
+app.listen(port, () => {
+  console.log(`listening on port ${port}`);
+});
 
 // Get all blogs
 app.get("/blogs", (req: Request, res: Response) => {
   const query = "SELECT * FROM blogs";
   connection.query(query, (error, results) => {
     if (error) {
-      console.error("error select blogs:", error);
+      console.error("Error select values:", error);
       res.status(500).json(error);
       return;
     }
@@ -68,7 +51,7 @@ app.post("/blogs", (req: Request, res: Response) => {
     [`${req.body.title}`, `${req.body.body}`],
     (error, results) => {
       if (error) {
-        console.error("error insert blogs:", error);
+        console.error("Error insert values:", error);
         res.status(500).json(error);
         return;
       }
@@ -79,30 +62,65 @@ app.post("/blogs", (req: Request, res: Response) => {
 
 // Update a blog
 app.put("/blogs/:id", (req: Request, res: Response) => {
-  if (!blogs.find((blog) => blog.id === req.params.id)) {
-    return res.status(404).json({ error: "Blog Not  Found" });
-  }
+  const id = req.params.id;
+  const { title, body } = req.body;
 
-  const updatedBlog = {
-    id: req.params.id,
-    title: req.body.title,
-    body: req.body.body,
-  };
+  const checkQuery = "SELECT * FROM blogs WHERE id = ?";
+  connection.query(checkQuery, [id], (error, results) => {
+    if (error) {
+      console.error("Error checking ID existence:", error);
+      res.status(500).json(error);
+      return;
+    }
 
-  res.status(200).json(updatedBlog);
+    const isExists = Array.isArray(results) && results.length > 0;
+    if (!isExists) {
+      console.log("Blog ID not found");
+      res.status(404).json({ message: "Blog ID not found" });
+      return;
+    }
+
+    const updateQuery = "UPDATE blogs SET title = ?, body = ? WHERE id = ?";
+    connection.query(updateQuery, [title, body, id], (error, results) => {
+      if (error) {
+        console.error("Error update values:", error);
+        res.status(500).json(error);
+        return;
+      }
+
+      res.status(200).json({ message: "Blog updated successfully" });
+    });
+  });
 });
 
 // Delete a blog
 app.delete("/blogs/:id", (req: Request, res: Response) => {
-  if (!blogs.find((blog) => blog.id === req.params.id)) {
-    return res.status(404).json({ error: "Blog Not  Found" });
-  }
+  const id = req.params.id;
 
-  const remainedBlogs = blogs.filter((blog) => blog.id !== req.params.id);
+  const checkQuery = "SELECT * FROM blogs WHERE id = ?";
+  connection.query(checkQuery, [id], (error, results) => {
+    if (error) {
+      console.error("Error checking ID existence:", error);
+      res.status(500).json(error);
+      return;
+    }
 
-  res.json(remainedBlogs);
-});
+    const isExists = Array.isArray(results) && results.length > 0;
+    if (!isExists) {
+      console.log("Blog ID not found");
+      res.status(404).json({ message: "Blog ID not found" });
+      return;
+    }
 
-app.listen(port, () => {
-  console.log(`listening on port ${port}`);
+    const deleteQuery = "DELETE FROM blogs WHERE id = ?";
+    connection.query(deleteQuery, [id], (error, results) => {
+      if (error) {
+        console.error("Error update values:", error);
+        res.status(500).json(error);
+        return;
+      }
+
+      res.status(200).json({ message: "Blog deleted successfully" });
+    });
+  });
 });
