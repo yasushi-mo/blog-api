@@ -16,10 +16,9 @@ const inputEncoding = "utf8";
 const outputEncoding = "hex";
 
 const cipher = createCipheriv(algorithm, key, iv);
-const decipher = createDecipheriv(algorithm, key, iv);
-
 const encrypted = cipher.update(data, inputEncoding, outputEncoding);
 export const encryptedText = encrypted + cipher.final(outputEncoding);
 
+const decipher = createDecipheriv(algorithm, key, iv);
 const decrypted = decipher.update(encryptedText, outputEncoding, inputEncoding);
 export const decryptedText = decrypted + decipher.final(inputEncoding);
